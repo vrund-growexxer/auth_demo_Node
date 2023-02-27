@@ -29,7 +29,6 @@ const employeeSchema = new mongoose.Schema({
   },
   confirmpassword: {
     type: String,
-    required: true,
   },
   gender: {
     type: String,
@@ -47,7 +46,6 @@ const employeeSchema = new mongoose.Schema({
 
 employeeSchema.methods.generateAuthToken = async function () {
   try {
-    console.log("key", process.env.SECRET_KEY);
     const token = jwt.sign(
       { _id: this._id.toString() },
       process.env.SECRET_KEY

@@ -7,14 +7,16 @@ require("./db/conn");
 const Register = require("./models/registers");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const auth = require("../src/middleware/auth");
 const port = process.env.PORT || 3002;
 
-// const staticPath = path.join(__dirname, "../", "public");
 const templatePath = path.join(__dirname, "../", "templates/views");
 const partialsPath = path.join(__dirname, "../", "templates/partials");
 
 app.use(express.urlencoded({ extended: "false" }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(express.static(templatePath));
 app.set("view engine", "hbs");
@@ -22,12 +24,10 @@ app.set("views", templatePath);
 hbs.registerPartials(partialsPath);
 
 app.get("/", (req, res) => {
-  // res.send("In home page");
   res.render("index");
 });
 
 app.get("/register", (req, res) => {
-  // res.send("In home page");
   res.render("register");
 });
 
@@ -48,6 +48,11 @@ app.post("/register", async (req, res) => {
       });
 
       const token = await registerEmployee.generateAuthToken();
+      console.log("token ===>", token);
+      res.cookie("jwt", token, {
+        expires: new Date(Date.now() + 60000),
+        httpOnly: true,
+      });
       const registered = await registerEmployee.save();
       res.status(201).render("login");
     } else {
@@ -68,8 +73,12 @@ app.post("/login", async (req, res) => {
     const password = req.body.password;
     const useremail = await Register.findOne({ email });
     const isMatch = bcrypt.compare(password, useremail.password);
+
     const token = await useremail.generateAuthToken();
-    console.log("the token =>", token);
+    res.cookie("jwt", token, {
+      expires: new Date(Date.now() + 60000),
+      httpOnly: true,
+    });
     if (isMatch) {
       res.render("dashboard");
     } else {
@@ -80,8 +89,24 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/dashboard", (req, res) => {
+app.get("/secret", auth, (req, res) => {
+  console.log("cookie", req.cookies.jwt);
+  res.render("secret");
+});
+
+app.get("/dashboard", auth, (req, res) => {
   res.render("dashboard");
+});
+
+app.get("/logout", auth, async (req, res) => {
+  try {
+    res.clearCookie("jwt");
+    console.log("logout successful");
+    await req.user.save();
+    res.render("index");
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 // const generateToken = async () => {
