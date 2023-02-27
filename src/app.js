@@ -109,16 +109,6 @@ app.get("/logout", auth, async (req, res) => {
   }
 });
 
-// const generateToken = async () => {
-//   const token = await jwt.sign(
-//     { _id: "63f6f2e6227e2984f8be7506" },
-//     "sbdyuyuaeyucxyusyurehiyzhshiuehdiuhxiuzhsiuehiuhzxiuhiuchids"
-//   );
-//   console.log("token-", token);
-// };
-
-// generateToken();
-
 app.listen(port, () => {
   console.log(`listening at port no - ${port}`);
 });
